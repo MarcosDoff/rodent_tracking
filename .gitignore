@@ -1,1 +1,6 @@
 videos/
+build/
+dist/
+*.png
+*spec
+__pycache__
