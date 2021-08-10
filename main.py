@@ -25,6 +25,9 @@ if __name__ == '__main__':
 
     while True:
         status, current_frame = video.read()
+        if (not status):
+            print ("reached the end of the video")
+            break
         gray_frame = cv2.cvtColor(current_frame, cv2.COLOR_BGR2GRAY)
         #gaussian blur for Otsu's Thresholding
         gray_frame = cv2.GaussianBlur(gray_frame, (5,5), 1)
@@ -42,7 +45,7 @@ if __name__ == '__main__':
 
         
         #the following lines are for test purposes only
-        center_left = (342,313)
+        center_arena = (342,313)
         arena_radius = 140
         min = 1000000
         #calculating the centroids and the distance to the center
@@ -51,18 +54,29 @@ if __name__ == '__main__':
             if (not M['m00']==0.0):
                 cx = int(M['m10']/M['m00'])
                 cy = int(M['m01']/M['m00'])
-                dist_center = sqrt((cx - center_left[0])**2 + (cy - center_left[1])**2)
+                dist_center = sqrt((cx - center_arena[0])**2 + (cy - center_arena[1])**2)
 
                 ext_left = tuple(cnt[cnt[:, :, 0].argmin()][0])
-                dist_left = sqrt((ext_left[0] - center_left[0])**2 + (ext_left[1] - center_left[1])**2)
-                if ((dist_center < min) and dist_left < arena_radius):
+                ext_right = tuple(cnt[cnt[:, :, 0].argmax()][0])
+                ext_top = tuple(cnt[cnt[:, :, 1].argmin()][0])
+                ext_bot = tuple(cnt[cnt[:, :, 1].argmax()][0])
+                dist_left = sqrt((ext_left[0] - center_arena[0])**2 + (ext_left[1] - center_arena[1])**2)
+                dist_right = sqrt((ext_right[0] - center_arena[0])**2 + (ext_right[1] - center_arena[1])**2)
+                dist_top = sqrt((ext_top[0] - center_arena[0])**2 + (ext_top[1] - center_arena[1])**2)
+                dist_bot = sqrt((ext_bot[0] - center_arena[0])**2 + (ext_bot[1] - center_arena[1])**2)
+                
+                if(dist_left < arena_radius and dist_right < arena_radius and
+                dist_top < arena_radius and dist_bot < arena_radius):
                     min = dist_center
                     rodent_contour = cnt
+
+        #TODO: transform arenas in dataclasses and make an array
+
         try:
             cv2.drawContours(contours_image, rodent_contour, -1, (0, 0, 255), 5)
         except:
             print('nothing whithin the boundaries')
-        cv2.circle(contours_image, center_left, arena_radius, (0, 255, 0), 5)
+        cv2.circle(contours_image, center_arena, arena_radius, (0, 255, 0), 5)
         cv2.imshow('video', contours_image)
         #cv2.imshow('video', border_image)#debug
         #end of loop
