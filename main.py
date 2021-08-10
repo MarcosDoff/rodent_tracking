@@ -2,6 +2,7 @@ from cv2 import cv2
 import numpy as np
 from math import sqrt
 from math import pi
+from tools import Arena
 
 def print_mouse_coordinates(event, x, y, flags, param):
     if(event == cv2.EVENT_LBUTTONDOWN):
@@ -22,6 +23,10 @@ if __name__ == '__main__':
     fps = video.get(cv2.CAP_PROP_FPS)
     print(fps)
     status, previous_frame = video.read()
+    
+    #test
+    rodent_number = 2
+    rodent_contours = [None] * rodent_number
 
     while True:
         status, current_frame = video.read()
@@ -41,42 +46,43 @@ if __name__ == '__main__':
 
         contours, hierarchy = cv2.findContours(border_image, cv2.RETR_LIST, cv2.CHAIN_APPROX_NONE)
         contours_image = current_frame.copy()
-        #cv2.drawContours(contours_image, contours, -1, (0, 0, 255), 5)
 
         
+
         #the following lines are for test purposes only
-        center_arena = (342,313)
-        arena_radius = 140
-        min = 1000000
+        arenas = []
+        arenas.append(Arena((342,313), 140))
+        arenas.append(Arena((698,313), 140))
         #calculating the centroids and the distance to the center
-        for cnt in contours:
-            M = cv2.moments(cnt)
-            if (not M['m00']==0.0):
-                cx = int(M['m10']/M['m00'])
-                cy = int(M['m01']/M['m00'])
-                dist_center = sqrt((cx - center_arena[0])**2 + (cy - center_arena[1])**2)
+        for arena in arenas:
+            for cnt in contours:
+                M = cv2.moments(cnt)
+                if (not M['m00']==0.0):
+                    cx = int(M['m10']/M['m00'])
+                    cy = int(M['m01']/M['m00'])
+                    dist_center = sqrt((cx - arena.center[0])**2 + (cy - arena.center[1])**2)
 
-                ext_left = tuple(cnt[cnt[:, :, 0].argmin()][0])
-                ext_right = tuple(cnt[cnt[:, :, 0].argmax()][0])
-                ext_top = tuple(cnt[cnt[:, :, 1].argmin()][0])
-                ext_bot = tuple(cnt[cnt[:, :, 1].argmax()][0])
-                dist_left = sqrt((ext_left[0] - center_arena[0])**2 + (ext_left[1] - center_arena[1])**2)
-                dist_right = sqrt((ext_right[0] - center_arena[0])**2 + (ext_right[1] - center_arena[1])**2)
-                dist_top = sqrt((ext_top[0] - center_arena[0])**2 + (ext_top[1] - center_arena[1])**2)
-                dist_bot = sqrt((ext_bot[0] - center_arena[0])**2 + (ext_bot[1] - center_arena[1])**2)
-                
-                if(dist_left < arena_radius and dist_right < arena_radius and
-                dist_top < arena_radius and dist_bot < arena_radius):
-                    min = dist_center
-                    rodent_contour = cnt
+                    ext_left = tuple(cnt[cnt[:, :, 0].argmin()][0])
+                    ext_right = tuple(cnt[cnt[:, :, 0].argmax()][0])
+                    ext_top = tuple(cnt[cnt[:, :, 1].argmin()][0])
+                    ext_bot = tuple(cnt[cnt[:, :, 1].argmax()][0])
+                    dist_left = sqrt((ext_left[0] - arena.center[0])**2 + (ext_left[1] - arena.center[1])**2)
+                    dist_right = sqrt((ext_right[0] - arena.center[0])**2 + (ext_right[1] - arena.center[1])**2)
+                    dist_top = sqrt((ext_top[0] - arena.center[0])**2 + (ext_top[1] - arena.center[1])**2)
+                    dist_bot = sqrt((ext_bot[0] - arena.center[0])**2 + (ext_bot[1] - arena.center[1])**2)
+                    
+                    if(dist_left < arena.radius and dist_right < arena.radius and
+                    dist_top < arena.radius and dist_bot < arena.radius):
+                        rodent_contours[arenas.index(arena)] = cnt
 
-        #TODO: transform arenas in dataclasses and make an array
 
         try:
-            cv2.drawContours(contours_image, rodent_contour, -1, (0, 0, 255), 5)
+            for rod in rodent_contours:
+                cv2.drawContours(contours_image, rod, -1, (0, 0, 255), 5)
         except:
             print('nothing whithin the boundaries')
-        cv2.circle(contours_image, center_arena, arena_radius, (0, 255, 0), 5)
+        for arena in arenas:
+            cv2.circle(contours_image, arena.center, arena.radius, (0, 255, 0), 3)
         cv2.imshow('video', contours_image)
         #cv2.imshow('video', border_image)#debug
         #end of loop
