@@ -25,7 +25,6 @@ if __name__ == '__main__':
     fps = video.get(cv2.CAP_PROP_FPS)
     print(fps)
     status, previous_frame = video.read()
-    print(video.get(cv2.CAP_PROP_FRAME_COUNT))#debug
 
 
     #test
@@ -35,7 +34,6 @@ if __name__ == '__main__':
     rodents = []
     for i in range(rodent_number):
         rodents.append(Rodent(position_array=[]))
-    i = 0 #debug
     while True:
         status, current_frame = video.read()
         if (not status):
@@ -98,11 +96,9 @@ if __name__ == '__main__':
         for arena in arenas:
             cv2.circle(contours_image, arena.center, arena.radius, (0, 255, 0), 3)
         cv2.imshow('video', contours_image)
-        #cv2.imshow('video', border_image)#debug
         #end of loop
         cv2.waitKey(20)
 
-    print(i) #debug
     #recording the information obtained
     if not os.path.exists("results"):
         os.mkdir("results")
