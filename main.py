@@ -2,7 +2,9 @@ from cv2 import cv2
 import numpy as np
 from math import sqrt
 from math import pi
-from tools import Arena
+import pandas as pd
+import os
+from tools import Arena, Rodent, contour_center
 
 def print_mouse_coordinates(event, x, y, flags, param):
     if(event == cv2.EVENT_LBUTTONDOWN):
@@ -23,11 +25,17 @@ if __name__ == '__main__':
     fps = video.get(cv2.CAP_PROP_FPS)
     print(fps)
     status, previous_frame = video.read()
-    
+    print(video.get(cv2.CAP_PROP_FRAME_COUNT))
+
+
     #test
     rodent_number = 2
+    #initialize rodent variables
     rodent_contours = [None] * rodent_number
-
+    rodents = []
+    for i in range(rodent_number):
+        rodents.append(Rodent(position_array=[]))
+    i = 0 #debug
     while True:
         status, current_frame = video.read()
         if (not status):
@@ -73,12 +81,15 @@ if __name__ == '__main__':
                     
                     if(dist_left < arena.radius and dist_right < arena.radius and
                     dist_top < arena.radius and dist_bot < arena.radius):
-                        rodent_contours[arenas.index(arena)] = cnt
+                        index = arenas.index(arena)
+                        rodent_contours[index] = cnt
+                        rodents[index].position_array.append(contour_center(cnt))
+                        i = i + 1 #debug
 
 
         try:
             for rod in rodent_contours:
-                cv2.drawContours(contours_image, rod, -1, (0, 0, 255), 5)
+                cv2.drawContours(contours_image, rod, -1, (0, 0, 255), 2)
         except:
             print('nothing whithin the boundaries')
         for arena in arenas:
@@ -88,7 +99,16 @@ if __name__ == '__main__':
         #end of loop
         cv2.waitKey(20)
 
-        
+    print(i) #debug
+    #recording the information obtained
+    if not os.path.exists("results"):
+        os.mkdir("results")
+        print("here!")
+    for rd in rodents:
+        if not os.path.exists("results/rodent_" + str(rodents.index(rd))):
+            os.mkdir("results/rodent_" + str(rodents.index(rd)))
+        open("results/rodent_" + str(rodents.index(rd)) + "/results.csv", 'w').close()#create the file
+        pd.DataFrame(rd.position_array).to_csv("results/rodent_" + str(rodents.index(rd)) + "/results.csv", header=None, index=None)
 
 
     
