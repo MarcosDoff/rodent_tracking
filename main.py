@@ -25,7 +25,7 @@ if __name__ == '__main__':
     fps = video.get(cv2.CAP_PROP_FPS)
     print(fps)
     status, previous_frame = video.read()
-    print(video.get(cv2.CAP_PROP_FRAME_COUNT))
+    print(video.get(cv2.CAP_PROP_FRAME_COUNT))#debug
 
 
     #test
@@ -63,6 +63,8 @@ if __name__ == '__main__':
         arenas.append(Arena((698,313), 140))
         #calculating the centroids and the distance to the center
         for arena in arenas:
+            i = i + 1
+
             for cnt in contours:
                 M = cv2.moments(cnt)
                 if (not M['m00']==0.0):
@@ -84,7 +86,8 @@ if __name__ == '__main__':
                         index = arenas.index(arena)
                         rodent_contours[index] = cnt
                         rodents[index].position_array.append(contour_center(cnt))
-                        i = i + 1 #debug
+                        break
+                        
 
 
         try:
@@ -103,7 +106,6 @@ if __name__ == '__main__':
     #recording the information obtained
     if not os.path.exists("results"):
         os.mkdir("results")
-        print("here!")
     for rd in rodents:
         if not os.path.exists("results/rodent_" + str(rodents.index(rd))):
             os.mkdir("results/rodent_" + str(rodents.index(rd)))
