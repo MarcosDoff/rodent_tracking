@@ -13,6 +13,7 @@ def print_mouse_coordinates(event, x, y, flags, param):
 #setting mouse callback function
 cv2.namedWindow('video')
 cv2.setMouseCallback('video', print_mouse_coordinates)
+scale = 1.0 #default
 
 if __name__ == '__main__':
 
@@ -33,7 +34,7 @@ if __name__ == '__main__':
     rodent_contours = [None] * rodent_number
     rodents = []
     for i in range(rodent_number):
-        rodents.append(Rodent(position_array=[]))
+        rodents.append(Rodent(position_array=[], scale=scale))
     while True:
         status, current_frame = video.read()
         if (not status):
@@ -103,11 +104,9 @@ if __name__ == '__main__':
     if not os.path.exists("results"):
         os.mkdir("results")
     for rd in rodents:
-        if not os.path.exists("results/rodent_" + str(rodents.index(rd))):
-            os.mkdir("results/rodent_" + str(rodents.index(rd)))
-        open("results/rodent_" + str(rodents.index(rd)) + "/results.csv", 'w').close()#create the file
-        pd.DataFrame(rd.position_array).to_csv("results/rodent_" + str(rodents.index(rd)) + "/results.csv", header=None, index=None)
-
+        rd.id = rodents.index(rd)
+        rd.calculate_stats()
+        rd.generate_report()
 
     
     
