@@ -58,8 +58,15 @@ if __name__ == '__main__':
 
         #the following lines are for test purposes only
         arenas = []
-        arenas.append(Arena((342,313), 140))
-        arenas.append(Arena((698,313), 140))
+        dictionary = {}
+        
+        dictionary['radius'] = 140
+        dictionary['center'] = (342,313)
+        arenas.append(Arena(Arena.CIRCLE, dictionary.copy()))
+
+        dictionary['radius'] = 140
+        dictionary['center'] = (698,313)
+        arenas.append(Arena(Arena.CIRCLE, dictionary.copy()))
         #calculating the centroids and the distance to the center
         for arena in arenas:
             i = i + 1
@@ -67,21 +74,7 @@ if __name__ == '__main__':
             for cnt in contours:
                 M = cv2.moments(cnt)
                 if (not M['m00']==0.0):
-                    cx = int(M['m10']/M['m00'])
-                    cy = int(M['m01']/M['m00'])
-                    dist_center = sqrt((cx - arena.center[0])**2 + (cy - arena.center[1])**2)
-
-                    ext_left = tuple(cnt[cnt[:, :, 0].argmin()][0])
-                    ext_right = tuple(cnt[cnt[:, :, 0].argmax()][0])
-                    ext_top = tuple(cnt[cnt[:, :, 1].argmin()][0])
-                    ext_bot = tuple(cnt[cnt[:, :, 1].argmax()][0])
-                    dist_left = sqrt((ext_left[0] - arena.center[0])**2 + (ext_left[1] - arena.center[1])**2)
-                    dist_right = sqrt((ext_right[0] - arena.center[0])**2 + (ext_right[1] - arena.center[1])**2)
-                    dist_top = sqrt((ext_top[0] - arena.center[0])**2 + (ext_top[1] - arena.center[1])**2)
-                    dist_bot = sqrt((ext_bot[0] - arena.center[0])**2 + (ext_bot[1] - arena.center[1])**2)
-                    
-                    if(dist_left < arena.radius and dist_right < arena.radius and
-                    dist_top < arena.radius and dist_bot < arena.radius):
+                   if(arena.is_contour_inside(cnt)):
                         index = arenas.index(arena)
                         rodent_contours[index] = cnt
                         rodents[index].position_array.append(contour_center(cnt))
@@ -95,7 +88,7 @@ if __name__ == '__main__':
         except:
             print('nothing whithin the boundaries')
         for arena in arenas:
-            cv2.circle(contours_image, arena.center, arena.radius, (0, 255, 0), 3)
+            arena.draw(contours_image)
         cv2.imshow('video', contours_image)
         #end of loop
         cv2.waitKey(20)
