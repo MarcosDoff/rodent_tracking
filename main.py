@@ -2,7 +2,9 @@ from cv2 import cv2
 import numpy as np
 from math import sqrt
 from math import pi
-from tools import Arena
+import pandas as pd
+import os
+from tools import Arena, Rodent, contour_center
 
 def print_mouse_coordinates(event, x, y, flags, param):
     if(event == cv2.EVENT_LBUTTONDOWN):
@@ -11,6 +13,7 @@ def print_mouse_coordinates(event, x, y, flags, param):
 #setting mouse callback function
 cv2.namedWindow('video')
 cv2.setMouseCallback('video', print_mouse_coordinates)
+scale = 1.0 #default
 
 if __name__ == '__main__':
 
@@ -23,11 +26,15 @@ if __name__ == '__main__':
     fps = video.get(cv2.CAP_PROP_FPS)
     print(fps)
     status, previous_frame = video.read()
-    
+
+
     #test
     rodent_number = 2
+    #initialize rodent variables
     rodent_contours = [None] * rodent_number
-
+    rodents = []
+    for i in range(rodent_number):
+        rodents.append(Rodent(position_array=[], scale=scale))
     while True:
         status, current_frame = video.read()
         if (not status):
@@ -55,6 +62,8 @@ if __name__ == '__main__':
         arenas.append(Arena((698,313), 140))
         #calculating the centroids and the distance to the center
         for arena in arenas:
+            i = i + 1
+
             for cnt in contours:
                 M = cv2.moments(cnt)
                 if (not M['m00']==0.0):
@@ -73,23 +82,31 @@ if __name__ == '__main__':
                     
                     if(dist_left < arena.radius and dist_right < arena.radius and
                     dist_top < arena.radius and dist_bot < arena.radius):
-                        rodent_contours[arenas.index(arena)] = cnt
+                        index = arenas.index(arena)
+                        rodent_contours[index] = cnt
+                        rodents[index].position_array.append(contour_center(cnt))
+                        break
+                        
 
 
         try:
             for rod in rodent_contours:
-                cv2.drawContours(contours_image, rod, -1, (0, 0, 255), 5)
+                cv2.drawContours(contours_image, rod, -1, (0, 0, 255), 2)
         except:
             print('nothing whithin the boundaries')
         for arena in arenas:
             cv2.circle(contours_image, arena.center, arena.radius, (0, 255, 0), 3)
         cv2.imshow('video', contours_image)
-        #cv2.imshow('video', border_image)#debug
         #end of loop
         cv2.waitKey(20)
 
-        
-
+    #recording the information obtained
+    if not os.path.exists("results"):
+        os.mkdir("results")
+    for rd in rodents:
+        rd.id = rodents.index(rd)
+        rd.calculate_stats()
+        rd.generate_report()
 
     
     

@@ -1,6 +1,7 @@
 videos/
 build/
 dist/
+results
 *.png
 *spec
 __pycache__
