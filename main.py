@@ -67,6 +67,7 @@ if __name__ == '__main__':
         dictionary['radius'] = 140
         dictionary['center'] = (698,313)
         arenas.append(Arena(Arena.CIRCLE, dictionary.copy()))
+
         #calculating the centroids and the distance to the center
         for arena in arenas:
             i = i + 1
