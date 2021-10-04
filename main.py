@@ -60,13 +60,16 @@ if __name__ == '__main__':
         arenas = []
         dictionary = {}
         
-        dictionary['radius'] = 140
-        dictionary['center'] = (342,313)
-        arenas.append(Arena(Arena.CIRCLE, dictionary.copy()))
+        # dictionary['radius'] = 140
+        # dictionary['center'] = (342,313)
+        # arenas.append(Arena(Arena.CIRCLE, dictionary.copy()))
 
-        dictionary['radius'] = 140
-        dictionary['center'] = (698,313)
-        arenas.append(Arena(Arena.CIRCLE, dictionary.copy()))
+        # dictionary['radius'] = 140
+        # dictionary['center'] = (698,313)
+        # arenas.append(Arena(Arena.CIRCLE, dictionary.copy()))
+
+        dictionary['points_list'] = [(224,305), (345,197), (466,307), (347,431)]
+        arenas.append(Arena(Arena.FREE_FORM, dictionary.copy()))
 
         #calculating the centroids and the distance to the center
         for arena in arenas:
