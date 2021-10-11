@@ -2,7 +2,6 @@ from dataclasses import dataclass
 from typing import List
 from cv2 import cv2
 from math import sqrt, trunc
-from numpy.core.overrides import verify_matching_signatures
 import pandas as pd
 import numpy as np
 import os

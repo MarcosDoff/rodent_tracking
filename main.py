@@ -5,19 +5,25 @@ from math import pi
 import pandas as pd
 import os
 from tools import Arena, Rodent, contour_center
+import UI
+from PySide6.QtWidgets import QApplication, QWidget, QInputDialog, QLineEdit, QFileDialog
+from PySide6.QtGui import QIcon
 
-def print_mouse_coordinates(event, x, y, flags, param):
-    if(event == cv2.EVENT_LBUTTONDOWN):
-        print(str(x) + ',' + str(y))
 
-#setting mouse callback function
-cv2.namedWindow('video')
-cv2.setMouseCallback('video', print_mouse_coordinates)
+#scale is the proportion of meters for each pixel 
 scale = 1.0 #default
 
 if __name__ == '__main__':
 
-    video = cv2.VideoCapture('videos/Campo_Aberto_h.264_MP4.mp4')
+    #start the app
+    app = QApplication()
+
+    window = UI.rodent_tracking()
+
+    #get video file
+    video_file = window.video_file
+
+    video = cv2.VideoCapture(video_file)
 
     if(not video.isOpened()):
         print("Problem opening file")
@@ -71,10 +77,11 @@ if __name__ == '__main__':
         dictionary['points_list'] = [(224,305), (345,197), (466,307), (347,431)]
         arenas.append(Arena(Arena.FREE_FORM, dictionary.copy()))
 
-        #calculating the centroids and the distance to the center
+        #findeing the rodent in each arena
         for arena in arenas:
             i = i + 1
 
+            #the rodent is a contour, so we must find the contour that is inside the arena
             for cnt in contours:
                 M = cv2.moments(cnt)
                 if (not M['m00']==0.0):
@@ -93,7 +100,10 @@ if __name__ == '__main__':
             print('nothing whithin the boundaries')
         for arena in arenas:
             arena.draw(contours_image)
-        cv2.imshow('video', contours_image)
+        resized_image = cv2.resize(contours_image, (1280, 720), interpolation=cv2.INTER_AREA)
+        
+        #cv2.imshow('video', resized_image)
+        window.show_cv2_img(resized_image)
         #end of loop
         cv2.waitKey(20)
 
