@@ -1,14 +1,82 @@
 from dataclasses import dataclass
 from typing import List
 from cv2 import cv2
-from math import sqrt
+from math import sqrt, trunc
+from numpy.core.overrides import verify_matching_signatures
 import pandas as pd
+import numpy as np
 import os
 
 @dataclass
 class Arena:
-    center: tuple
-    radius: int
+    #variables
+    variant: int
+    relevant_parameters: dict
+    #constants
+    CIRCLE = 0
+    RECTANGLE = 1
+    FREE_FORM = 2
+    #methods
+    def __init__(self, variant, relevant_parameters):#the logic that determines and records the parameters will be done in the main program
+        self.variant = variant
+        self.relevant_parameters = relevant_parameters
+        #check if the parameters match the variant
+        if self.variant == Arena.CIRCLE:
+            if not ('center' in self.relevant_parameters.keys() and 'radius' in self.relevant_parameters.keys()):
+                print('CIRCLE does not contain center or radius')
+                exit()
+        elif self.variant == Arena.RECTANGLE:
+            if not ('bot_right' in self.relevant_parameters.keys() and 'top_left' in self.relevant_parameters.keys()):
+                print('RECTANGLE does not contain bot_right or top_left')
+                exit()
+
+    def is_contour_inside(self, cnt):
+        ext_left = tuple(cnt[cnt[:, :, 0].argmin()][0])
+        ext_right = tuple(cnt[cnt[:, :, 0].argmax()][0])
+        ext_top = tuple(cnt[cnt[:, :, 1].argmin()][0])
+        ext_bot = tuple(cnt[cnt[:, :, 1].argmax()][0])
+                    
+        if(self.is_point_inside(ext_left) and self.is_point_inside(ext_right) and self.is_point_inside(ext_top) and self.is_point_inside(ext_bot)):
+            return True
+        return False
+
+    def is_point_inside(self, point):
+        #determines whether a point is inside the arena or not
+        #will have a different implementation depending on the variant
+        if self.variant == Arena.CIRCLE:
+            center = self.relevant_parameters['center']
+            radius = self.relevant_parameters['radius']
+            if distance_two_points(center, point) > radius:
+                return False
+            return True
+        elif self.variant == Arena.RECTANGLE:
+            bot_right = self.relevant_parameters['bot_right']
+            top_left = self.relevant_parameters['top_left']
+            if point[0] > top_left[0] and point[0] < bot_right[0] and point[1] < top_left[1] and point[1] >bot_right[1]:
+                return True
+            return False
+        elif self.variant == Arena.FREE_FORM:
+            contour = []
+            for p in self.relevant_parameters['points_list']:
+                contour.append([[p[0],p[1]]])
+            contour = np.array(contour, dtype=np.int32)
+            
+            if cv2.pointPolygonTest(contour, point, False) > 0:
+                return True
+            return False
+        else:
+            return False
+
+    def draw(self, img):
+        if self.variant == Arena.CIRCLE:
+            cv2.circle(img, self.relevant_parameters['center'], self.relevant_parameters['radius'], (0, 255, 0), 3)
+        elif self.variant == Arena.RECTANGLE:
+            cv2.rectangle(img, self.relevant_parameters['top_left'], self.relevant_parameters['bot_right'], (0, 255, 0), 3)
+        elif self.variant == Arena.FREE_FORM:
+            points_list = self.relevant_parameters['points_list']
+            for i in range(len(points_list)):
+                cv2.line(img, points_list[i], points_list[(i+1)%len(points_list)], (0, 255, 0), 3)
+
 
 @dataclass
 class Rodent:
