@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import List
 from cv2 import cv2
-from math import sqrt, trunc
+from math import sqrt
 import pandas as pd
 import numpy as np
 import os
