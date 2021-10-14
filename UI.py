@@ -39,8 +39,9 @@ class rodent_tracking(QWidget):
     def get_video_file(self):
         self.video_file, _ = QFileDialog.getOpenFileName(self, "Select the video", "", "Videos (*.mp4)")
         self.text_video.setText(self.video_file)
-
-        if(self.use_saved_config):
+    
+    def get_cfg_file(self):
+        if(self.checkbox_cfg.checkState()):
             self.config_file, _ = QFileDialog.getOpenFileName(self, "Select the configuration", "", "Configs (*.cfg)")
 
     def change_layout_video(self):
@@ -85,6 +86,7 @@ class rodent_tracking(QWidget):
 
         button_cfg = QPushButton("...")
         button_cfg.setBaseSize(20, 20)
+        button_cfg.clicked.connect(self.get_cfg_file)
 
         cfg_layout.addWidget(self.checkbox_cfg, 0, 0, 1, 1)
         cfg_layout.addWidget(button_cfg, 1, 1, 1, 1)
