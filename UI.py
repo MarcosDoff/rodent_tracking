@@ -1,4 +1,5 @@
 import sys
+from cv2 import cv2
 from tools import Arena
 from PySide6 import QtWidgets
 from PySide6 import QtGui
@@ -35,6 +36,22 @@ class rodent_tracking(QWidget):
         #calling methods
         self.change_layout_file_selection()
         self.change_layout_arena_definitions()
+
+        #loading a frame so the user can draw the arenas
+        video = cv2.VideoCapture(self.video_file)
+        frame_number = int(video.get(cv2.CAP_PROP_FRAME_COUNT)/2)
+        video.set(1, frame_number)
+        status, self.frame = video.read()
+        video.release()
+        #resize the image(some parameters will be properties to be used later)
+        self.old_height, self.old_width, channels = self.frame.shape
+        self.scale_factor = 500/self.old_height
+        new_height = int(self.scale_factor * self.old_height)
+        new_width = int(self.scale_factor * self.old_width)
+        new_shape = (new_width, new_height)
+        self.frame = cv2.resize(self.frame, new_shape, interpolation= cv2.INTER_AREA)
+
+        self.change_layout_add_new_arena()
         self.change_layout_video()
         
         
@@ -113,7 +130,7 @@ class rodent_tracking(QWidget):
         #add layouts to main layout
         
         self.layout.addLayout(video_layout)
-        self.layout.addLayout(cfg_layout)
+        #self.layout.addLayout(cfg_layout)
         self.layout.addLayout(next_layout)
 
        
@@ -179,11 +196,45 @@ class rodent_tracking(QWidget):
 
 
         QWidget().setLayout(self.layout)#free the layout
+
+    def change_layout_add_new_arena(self):
+        self.next = False
+
+        self.layout = QBoxLayout(QBoxLayout.TopToBottom)
+        self.width = 800
+        self.height = 600
+        self.resize(self.width, self.height)
+
+        #next button
+        next_layout = QBoxLayout(QBoxLayout.RightToLeft)
+
+        button_next = QPushButton("Next")
+        button_next.setFixedSize(80, 20)
+        button_next.clicked.connect(self.next_button_handler)
+        next_layout.addWidget(button_next, alignment=QtCore.Qt.AlignRight | QtCore.Qt.AlignBottom)
+
+
+        #adding layouts
+
+        image_frame = QLabel(self)
+
+        self.layout.addWidget(image_frame)
+        self.layout.addLayout(next_layout)
+
+        self.setLayout(self.layout)
+        self.show()
+
+        #necessary to keep checking the events
+        while not self.next:
+            self.show_cv2_img(self.frame, image_frame)
+            QCoreApplication.processEvents()
+        
+        QWidget().setLayout(self.layout)#free the layout
         
 
-    def show_cv2_img(self, img):
+    def show_cv2_img(self, img, widget):
         self.image = QtGui.QImage(img.data, img.shape[1], img.shape[0], QtGui.QImage.Format_BGR888)
-        self.image_frame.setPixmap(QtGui.QPixmap.fromImage(self.image))
+        widget.setPixmap(QtGui.QPixmap.fromImage(self.image))
 
     def next_button_handler(self):
         self.next = True

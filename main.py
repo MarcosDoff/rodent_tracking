@@ -101,7 +101,7 @@ if __name__ == '__main__':
         resized_image = cv2.resize(contours_image, (1280, 720), interpolation=cv2.INTER_AREA)
         
         #cv2.imshow('video', resized_image)
-        window.show_cv2_img(resized_image)
+        window.show_cv2_img(resized_image, window.image_frame)
         #end of loop
         cv2.waitKey(20)
 
