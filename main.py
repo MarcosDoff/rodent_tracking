@@ -39,6 +39,7 @@ if __name__ == '__main__':
     #initialize rodent variables
     rodent_contours = [None] * rodent_number
     rodents = []
+    arenas = window.arenas
     for i in range(rodent_number):
         rodents.append(Rodent(position_array=[], scale=scale))
     while True:
@@ -62,17 +63,17 @@ if __name__ == '__main__':
 
         
 
-        #the following lines are for test purposes only
-        arenas = []
-        dictionary = {}
+        # #the following lines are for test purposes only
+        # arenas = []
+        # dictionary = {}
         
-        dictionary['radius'] = 140
-        dictionary['center'] = (342,313)
-        arenas.append(Arena(Arena.CIRCLE, dictionary.copy()))
+        # dictionary['radius'] = 140
+        # dictionary['center'] = (342,313)
+        # arenas.append(Arena(Arena.CIRCLE, dictionary.copy()))
 
-        dictionary['radius'] = 140
-        dictionary['center'] = (698,313)
-        arenas.append(Arena(Arena.CIRCLE, dictionary.copy()))
+        # dictionary['radius'] = 140
+        # dictionary['center'] = (698,313)
+        # arenas.append(Arena(Arena.CIRCLE, dictionary.copy()))
 
 
         #findeing the rodent in each arena

@@ -1,6 +1,7 @@
 import sys
 from cv2 import cv2
-from tools import Arena
+from numpy.lib.function_base import select
+from tools import Arena, distance_two_points
 from PySide6 import QtWidgets
 from PySide6 import QtGui
 from PySide6 import QtCore
@@ -29,6 +30,7 @@ class rodent_tracking(QWidget):
         self.number_of_arenas = 1 #defaults to 1
         self.arena_type = Arena.CIRCLE #defaults to circle
         self.arenas = []
+        self.arena_points_number = 0
         
         #misc properties
         self.next = False
@@ -50,8 +52,10 @@ class rodent_tracking(QWidget):
         new_width = int(self.scale_factor * self.old_width)
         new_shape = (new_width, new_height)
         self.frame = cv2.resize(self.frame, new_shape, interpolation= cv2.INTER_AREA)
-
-        self.change_layout_add_new_arena()
+        for i in range(self.number_of_arenas):
+            if(self.use_saved_config):
+                break
+            self.change_layout_add_new_arena()
         self.change_layout_video()
         
         
@@ -60,6 +64,79 @@ class rodent_tracking(QWidget):
     #closeEvent override
     def closeEvent(self, event):
         exit()
+
+    #mouse handler event override
+    def mousePressEvent(self, event: QtGui.QMouseEvent):
+        (x, y) = (event.x() - 10, event.y() - 10)
+        if x < 0 or y < 0:
+            return
+        
+        #transformations (these are necessary because the arenas are defined in relation to the original image)
+        x = int(x/self.scale_factor)
+        y = int(y/self.scale_factor)
+
+        if (self.arena_type == Arena.CIRCLE):
+            self.new_point_circle(x, y)
+        elif (self.arena_type == Arena.RECTANGLE):
+            self.new_point_rectangle(x, y)
+        elif (self.arena_type == Arena.FREE_FORM):
+            self.new_point_free_form(x, y, event.button())
+        
+
+
+    def new_point_circle(self, x, y):
+        if (self.arena_points_number == 0):
+            self.dictionary = {}
+            self.dictionary['center'] = (x, y)
+        elif (self.arena_points_number == 1):
+            self.dictionary['radius'] = int(distance_two_points((x, y), self.dictionary['center']))
+            self.arenas.append(Arena(Arena.CIRCLE, self.dictionary.copy()))
+            #draw
+            center = (int(self.dictionary['center'][0]*self.scale_factor),int(self.dictionary['center'][1]*self.scale_factor))
+            radius = int(self.dictionary['radius']*self.scale_factor)
+            cv2.circle(self.frame, center, radius, (0, 255, 0), 3)
+        elif (self.arena_points_number >= 2):
+            return
+        
+        self.arena_points_number += 1
+
+    def new_point_rectangle(self, x, y):
+        if (self.arena_points_number == 0):
+            self.dictionary = {}
+            self.dictionary['top_left'] = (x, y)
+        elif (self.arena_points_number == 1):
+            self.dictionary['bot_right'] = (x, y)
+            self.arenas.append(Arena(Arena.RECTANGLE, self.dictionary.copy()))
+            #draw
+            top_left = (int(self.dictionary['top_left'][0]*self.scale_factor),int(self.dictionary['top_left'][1]*self.scale_factor))
+            bot_right = (int(self.dictionary['bot_right'][0]*self.scale_factor),int(self.dictionary['bot_right'][1]*self.scale_factor))
+            cv2.rectangle(self.frame, top_left, bot_right, (0, 255, 0), 3)
+        elif (self.arena_points_number >= 2):
+            return
+        
+        self.arena_points_number += 1
+
+    def new_point_free_form(self, x, y, button):
+        if self.arena_points_number == 0:
+            self.dictionary = {}
+            self.dictionary['points_list'] = []
+            self.arena_points_number += 1
+        if button == QtCore.Qt.LeftButton:
+            self.dictionary['points_list'].append((x, y))
+        elif button == QtCore.Qt.RightButton:
+            self.arenas.append(Arena(Arena.FREE_FORM, self.dictionary))
+            #draw
+            points = []
+            for p in self.dictionary['points_list']:
+                points.append((int(p[0]*self.scale_factor), int(p[1]*self.scale_factor)))
+
+            for i in range(len(points)):
+                cv2.line(self.frame, points[i], points[(i+1)%len(points)], (0, 255, 0), 3)
+        
+
+
+
+
 
     def get_video_file(self):
         self.video_file, _ = QFileDialog.getOpenFileName(self, "Select the video", "", "Videos (*.mp4)")
@@ -199,7 +276,8 @@ class rodent_tracking(QWidget):
 
     def change_layout_add_new_arena(self):
         self.next = False
-
+        self.arena_points = []
+        self.arena_points_number = 0
         self.layout = QBoxLayout(QBoxLayout.TopToBottom)
         self.width = 800
         self.height = 600
