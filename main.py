@@ -38,7 +38,7 @@ if __name__ == '__main__':
     rodents = []
     arenas = window.arenas
     for i in range(rodent_number):
-        rodents.append(Rodent(position_array=[], scale=scale))
+        rodents.append(Rodent(position_array=[], scale=scale, video_file=video_file))
     while True:
         status, current_frame = video.read()
         if (not status):

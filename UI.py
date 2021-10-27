@@ -47,6 +47,7 @@ class rodentTracking(QWidget):
         self.current_screen = rodentTracking.FILE_SELECTION
         self.scale_points_number = 0
         self.real_world_scale = 1.0 #default
+        self.scale_factor = 1
         
 
         #calling methods

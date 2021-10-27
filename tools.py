@@ -86,13 +86,19 @@ class Rodent:
     scale: float
     id: int
 
-    def __init__(self, position_array, scale):
+    def __init__(self, position_array, scale, video_file):
         self.position_array = position_array
         self.scale = scale
         self.distance_between_frames_in_pixels = [0]
         self.distance_between_frames_in_meters = []
         self.sum_of_distances = 0.0 #initialize as zero
         self.id = -1
+
+        #split the video file
+        video_file = os.path.splitext(video_file)[0]
+        sections = video_file.split("/")
+        self.video_file = sections.pop()
+        
 
     def calculate_distance_between_frames(self):
         for i in range(1, len(self.position_array)):
@@ -116,10 +122,11 @@ class Rodent:
         frame = [self.position_array, self.distance_between_frames_in_pixels,
         self.distance_between_frames_in_meters, [self.sum_of_distances]]
         data_frame = pd.DataFrame(data= frame).T
-        if not os.path.exists("results/rodent_" + str(self.id)):
-            os.mkdir("results/rodent_" + str(self.id))
-        open("results/rodent_" + str(self.id) + "/results.csv", 'w').close()#create the file
-        data_frame.to_csv("results/rodent_" + str(self.id) + "/results.csv", index=None, sep=';',
+        user_folder = os.environ['USERPROFILE'].replace('\\','/')
+        if not os.path.exists(user_folder+ "/Documents/RodentTracking/results/" + self.video_file + "/rodent_" + str(self.id)):
+            os.makedirs(user_folder+ "/Documents/RodentTracking/results/" + self.video_file + "/rodent_" + str(self.id))
+        open(user_folder+ "/Documents/RodentTracking/results/" + self.video_file + "/rodent_" + str(self.id) + "/results.csv", 'w').close()#create the file
+        data_frame.to_csv(user_folder+ "/Documents/RodentTracking/results/" + self.video_file + "/rodent_" + str(self.id) + "/results.csv", index=None, sep=';',
         header=['Positions', 'Distance(pixels)', 'Distance(m)', 'Total Traveled Distance (m)'])
 
 
