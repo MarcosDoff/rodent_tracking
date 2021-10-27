@@ -1,8 +1,7 @@
 from dataclasses import dataclass
 from typing import List
 from cv2 import cv2
-from math import sqrt, trunc
-from numpy.core.overrides import verify_matching_signatures
+from math import sqrt
 import pandas as pd
 import numpy as np
 import os
@@ -121,7 +120,7 @@ class Rodent:
             os.mkdir("results/rodent_" + str(self.id))
         open("results/rodent_" + str(self.id) + "/results.csv", 'w').close()#create the file
         data_frame.to_csv("results/rodent_" + str(self.id) + "/results.csv", index=None, sep=';',
-        header=['Positions', 'Distance(pixels)', 'Distance(m)', 'Total Traveled Distance'])
+        header=['Positions', 'Distance(pixels)', 'Distance(m)', 'Total Traveled Distance (m)'])
 
 
 def contour_center(contour):
