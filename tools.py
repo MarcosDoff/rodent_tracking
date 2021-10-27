@@ -120,7 +120,7 @@ class Rodent:
             os.mkdir("results/rodent_" + str(self.id))
         open("results/rodent_" + str(self.id) + "/results.csv", 'w').close()#create the file
         data_frame.to_csv("results/rodent_" + str(self.id) + "/results.csv", index=None, sep=';',
-        header=['Positions', 'Distance(pixels)', 'Distance(m)', 'Total Traveled Distance'])
+        header=['Positions', 'Distance(pixels)', 'Distance(m)', 'Total Traveled Distance (m)'])
 
 
 def contour_center(contour):

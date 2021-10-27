@@ -10,7 +10,15 @@ from PySide6.QtWidgets import QBoxLayout, QCheckBox, QComboBox, QGridLayout, QLa
 from PySide6.QtGui import QIcon
 
 
-class rodent_tracking(QWidget):
+class rodentTracking(QWidget):
+    #constants
+    FILE_SELECTION = 0
+    ARENA_DEFINITION = 1
+    SCALE_DEFINITION = 2
+    ARENA_DRAW = 3
+    VIDEO = 4
+
+    
     def __init__(self):
         super().__init__()
         self.width = 800
@@ -31,9 +39,15 @@ class rodent_tracking(QWidget):
         self.arena_type = Arena.CIRCLE #defaults to circle
         self.arenas = []
         self.arena_points_number = 0
+
+        
         
         #misc properties
         self.next = False
+        self.current_screen = rodentTracking.FILE_SELECTION
+        self.scale_points_number = 0
+        self.real_world_scale = 1.0 #default
+        
 
         #calling methods
         self.change_layout_file_selection()
@@ -52,6 +66,7 @@ class rodent_tracking(QWidget):
         new_width = int(self.scale_factor * self.old_width)
         new_shape = (new_width, new_height)
         self.frame = cv2.resize(self.frame, new_shape, interpolation= cv2.INTER_AREA)
+        self.change_layout_scale()
         for i in range(self.number_of_arenas):
             if(self.use_saved_config):
                 break
@@ -75,13 +90,32 @@ class rodent_tracking(QWidget):
         x = int(x/self.scale_factor)
         y = int(y/self.scale_factor)
 
-        if (self.arena_type == Arena.CIRCLE):
-            self.new_point_circle(x, y)
-        elif (self.arena_type == Arena.RECTANGLE):
-            self.new_point_rectangle(x, y)
-        elif (self.arena_type == Arena.FREE_FORM):
-            self.new_point_free_form(x, y, event.button())
         
+        if self.current_screen == rodentTracking.ARENA_DRAW:
+            if (self.arena_type == Arena.CIRCLE):
+                self.new_point_circle(x, y)
+            elif (self.arena_type == Arena.RECTANGLE):
+                self.new_point_rectangle(x, y)
+            elif (self.arena_type == Arena.FREE_FORM):
+                self.new_point_free_form(x, y, event.button())
+
+        elif self.current_screen == rodentTracking.SCALE_DEFINITION:
+            self.new_point_scale(x, y)
+        
+
+
+    def new_point_scale(self, x, y):
+        if self.scale_points_number == 0:
+            self.scale_first_point = (x, y)
+            self.scale_points_number += 1
+        elif self.scale_points_number == 1:
+            self.real_world_scale = distance_two_points((x, y), self.scale_first_point)
+            self.scale_points_number += 1
+            #draw
+            first_point = (int(self.scale_first_point[0]*self.scale_factor),int(self.scale_first_point[1]*self.scale_factor))
+            second_point = (int(x*self.scale_factor),int(y*self.scale_factor))
+            cv2.line(self.frame, first_point, second_point, (255, 0, 0), 3)
+
 
 
     def new_point_circle(self, x, y):
@@ -138,6 +172,7 @@ class rodent_tracking(QWidget):
 
 
 
+
     def get_video_file(self):
         self.video_file, _ = QFileDialog.getOpenFileName(self, "Select the video", "", "Videos (*.mp4)")
         self.text_video.setText(self.video_file)
@@ -147,8 +182,8 @@ class rodent_tracking(QWidget):
             self.config_file, _ = QFileDialog.getOpenFileName(self, "Select the configuration", "", "Configs (*.cfg)")
 
     def change_layout_video(self):
+        self.current_screen = rodentTracking.VIDEO
         self.next = False
-        print('teste')
         self.width = 1280
         self.height = 720
         self.resize(self.width, self.height)
@@ -159,6 +194,7 @@ class rodent_tracking(QWidget):
 
     def change_layout_file_selection(self):
         self.next = False
+        self.current_screen = rodentTracking.FILE_SELECTION
         self.layout = QBoxLayout(QBoxLayout.TopToBottom)
         self.width = 800
         self.height = 300
@@ -225,7 +261,7 @@ class rodent_tracking(QWidget):
 
     def change_layout_arena_definitions(self):
         self.next = False
-
+        self.current_screen = rodentTracking.ARENA_DEFINITION
         self.layout = QBoxLayout(QBoxLayout.TopToBottom)
 
         #number of arenas and type of arena
@@ -276,6 +312,7 @@ class rodent_tracking(QWidget):
 
     def change_layout_add_new_arena(self):
         self.next = False
+        self.current_screen = rodentTracking.ARENA_DRAW
         self.arena_points = []
         self.arena_points_number = 0
         self.layout = QBoxLayout(QBoxLayout.TopToBottom)
@@ -307,6 +344,48 @@ class rodent_tracking(QWidget):
             self.show_cv2_img(self.frame, image_frame)
             QCoreApplication.processEvents()
         
+        QWidget().setLayout(self.layout)#free the layout
+
+    def change_layout_scale(self):
+        self.current_screen = rodentTracking.SCALE_DEFINITION
+        self.next = False
+        self.arena_points = []
+        self.arena_points_number = 0
+        self.layout = QBoxLayout(QBoxLayout.TopToBottom)
+        self.width = 800
+        self.height = 600
+        self.resize(self.width, self.height)
+
+        #next button
+        next_layout = QBoxLayout(QBoxLayout.RightToLeft)
+
+        button_next = QPushButton("Next")
+        button_next.setFixedSize(80, 20)
+        button_next.clicked.connect(self.next_button_handler)
+        next_layout.addWidget(button_next, alignment=QtCore.Qt.AlignRight | QtCore.Qt.AlignBottom)
+
+
+        text_scale = QLineEdit("Distance in cm")
+        text_scale.setReadOnly(False)
+
+        next_layout.addWidget(text_scale, alignment=QtCore.Qt.AlignLeft | QtCore.Qt.AlignBottom)
+
+        #adding layouts
+
+        image_frame = QLabel(self)
+
+        self.layout.addWidget(image_frame)
+        self.layout.addLayout(next_layout)
+
+        self.setLayout(self.layout)
+        self.show()
+
+        #necessary to keep checking the events
+        while not self.next:
+            self.show_cv2_img(self.frame, image_frame)
+            QCoreApplication.processEvents()
+        
+        self.real_world_scale = (int(text_scale.text())/100)/self.real_world_scale
         QWidget().setLayout(self.layout)#free the layout
         
 

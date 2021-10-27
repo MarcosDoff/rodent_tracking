@@ -10,15 +10,13 @@ from PySide6.QtWidgets import QApplication, QWidget, QInputDialog, QLineEdit, QF
 from PySide6.QtGui import QIcon
 
 
-#scale is the proportion of meters for each pixel 
-scale = 1.0 #default
 
 if __name__ == '__main__':
 
     #start the app
     app = QApplication()
 
-    window = UI.rodent_tracking()
+    window = UI.rodentTracking()
 
     #get video file
     video_file = window.video_file
@@ -30,12 +28,11 @@ if __name__ == '__main__':
         exit()
 
     fps = video.get(cv2.CAP_PROP_FPS)
-    print(fps)
     status, previous_frame = video.read()
 
 
-    #test
-    rodent_number = 2
+    rodent_number = window.number_of_arenas
+    scale = window.real_world_scale
     #initialize rodent variables
     rodent_contours = [None] * rodent_number
     rodents = []
