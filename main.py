@@ -6,8 +6,8 @@ import pandas as pd
 import os
 from tools import Arena, Rodent, contour_center
 import UI
-from PySide6.QtWidgets import QApplication, QWidget, QInputDialog, QLineEdit, QFileDialog
-from PySide6.QtGui import QIcon
+from PySide2.QtWidgets import QApplication, QWidget, QInputDialog, QLineEdit, QFileDialog
+from PySide2.QtGui import QIcon
 
 
 

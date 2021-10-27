@@ -2,12 +2,12 @@ import sys
 from cv2 import cv2
 from numpy.lib.function_base import select
 from tools import Arena, distance_two_points
-from PySide6 import QtWidgets
-from PySide6 import QtGui
-from PySide6 import QtCore
-from PySide6.QtCore import QCoreApplication, QLine, QMutex, QRect, QSize, QWaitCondition
-from PySide6.QtWidgets import QBoxLayout, QCheckBox, QComboBox, QGridLayout, QLabel, QLineEdit, QPushButton, QSpinBox, QWidget, QFileDialog
-from PySide6.QtGui import QIcon
+from PySide2 import QtWidgets
+from PySide2 import QtGui
+from PySide2 import QtCore
+from PySide2.QtCore import QCoreApplication, QLine, QMutex, QRect, QSize, QWaitCondition
+from PySide2.QtWidgets import QBoxLayout, QCheckBox, QComboBox, QGridLayout, QLabel, QLineEdit, QPushButton, QSpinBox, QWidget, QFileDialog
+from PySide2.QtGui import QIcon
 
 
 class rodentTracking(QWidget):
