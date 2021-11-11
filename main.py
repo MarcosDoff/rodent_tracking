@@ -28,6 +28,7 @@ if __name__ == '__main__':
         exit()
 
     fps = video.get(cv2.CAP_PROP_FPS)
+    video.set(1, int(fps*10))#skip 10s
     status, previous_frame = video.read()
 
 
@@ -39,40 +40,47 @@ if __name__ == '__main__':
     arenas = window.arenas
     for i in range(rodent_number):
         rodents.append(Rodent(position_array=[], scale=scale, video_file=video_file))
+
+
+    fgbg = cv2.bgsegm.createBackgroundSubtractorMOG()
+
     while True:
         status, current_frame = video.read()
         if (not status):
             print ("reached the end of the video")
             break
         gray_frame = cv2.cvtColor(current_frame, cv2.COLOR_BGR2GRAY)
-        #gaussian blur for Otsu's Thresholding
+        #gaussian blur
         gray_frame = cv2.GaussianBlur(gray_frame, (5,5), 1)
-        ret, bw_frame = cv2.threshold(gray_frame, 0, 255, cv2.THRESH_BINARY+cv2.THRESH_OTSU)
-        #erosion and dilation to get rid of glares
-        kernel_size = 7
+
+        #MOG
+        bw_frame = fgbg.apply(gray_frame ,learningRate=0.001)
+        cv2.imshow('mask', bw_frame)
+
+        #morphology operations
+        
+        kernel_size = 3
         kernel = np.ones((kernel_size, kernel_size), np.uint8)
         eroded_frame = cv2.morphologyEx(bw_frame, cv2.MORPH_OPEN, kernel)
+        kernel_size = 20
+        kernel = np.ones((kernel_size, kernel_size), np.uint8)
+        eroded_frame = cv2.morphologyEx(bw_frame, cv2.MORPH_GRADIENT, kernel)
+        
+        kernel_size = 10
+        kernel = np.ones((kernel_size, kernel_size), np.uint8)
+        eroded_frame = cv2.morphologyEx(bw_frame, cv2.MORPH_CLOSE, kernel)
+        cv2.imshow('er', eroded_frame)
         #border detection
         border_image = cv2.Canny(eroded_frame, 0, 1)
 
-        contours, hierarchy = cv2.findContours(border_image, cv2.RETR_LIST, cv2.CHAIN_APPROX_NONE)
+        cv2.imshow('bor',border_image)
+
+        contours, hierarchy = cv2.findContours(eroded_frame, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
         contours_image = current_frame.copy()
+        cv2.drawContours(current_frame, contours, -1, (0, 255, 0), 2, cv2.LINE_AA)
+        cv2.imshow('cont', current_frame)
 
-        
-
-        # #the following lines are for test purposes only
-        # arenas = []
-        # dictionary = {}
-        
-        # dictionary['radius'] = 140
-        # dictionary['center'] = (342,313)
-        # arenas.append(Arena(Arena.CIRCLE, dictionary.copy()))
-
-        # dictionary['radius'] = 140
-        # dictionary['center'] = (698,313)
-        # arenas.append(Arena(Arena.CIRCLE, dictionary.copy()))
-
-
+    
         #findeing the rodent in each arena
         for arena in arenas:
             i = i + 1
@@ -81,7 +89,7 @@ if __name__ == '__main__':
             for cnt in contours:
                 M = cv2.moments(cnt)
                 if (not M['m00']==0.0):
-                   if(arena.is_contour_inside(cnt)):
+                    if(arena.is_contour_inside(cnt)):
                         index = arenas.index(arena)
                         rodent_contours[index] = cnt
                         rodents[index].position_array.append(contour_center(cnt))
