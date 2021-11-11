@@ -2,6 +2,7 @@ from dataclasses import dataclass
 from typing import List
 from cv2 import cv2
 from math import sqrt
+from matplotlib import path
 import pandas as pd
 import numpy as np
 import os
@@ -29,7 +30,7 @@ class Arena:
                 print('RECTANGLE does not contain bot_right or top_left')
                 exit()
 
-    def is_contour_inside(self, cnt):
+    def is_contour_inside(self, cnt,):
         ext_left = tuple(cnt[cnt[:, :, 0].argmin()][0])
         ext_right = tuple(cnt[cnt[:, :, 0].argmax()][0])
         ext_top = tuple(cnt[cnt[:, :, 1].argmin()][0])
@@ -55,14 +56,12 @@ class Arena:
                 return True
             return False
         elif self.variant == Arena.FREE_FORM:
-            contour = []
+            poly = []
             for p in self.relevant_parameters['points_list']:
-                contour.append([[p[0],p[1]]])
-            contour = np.array(contour, dtype=np.int32)
-            
-            if cv2.pointPolygonTest(contour, point, False) > 0:
-                return True
-            return False
+                poly.append(p)
+            poly = path.Path(poly)
+            return poly.contains_points([point])
+               
         else:
             return False
 
