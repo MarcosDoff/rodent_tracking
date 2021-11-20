@@ -138,3 +138,27 @@ def contour_center(contour):
 #calculates the distance between two points (the points are tuples)
 def distance_two_points(p1, p2):
     return sqrt((p1[0] - p2[0])**2 + (p1[1] - p2[1])**2)
+
+def contour_center(cnt):
+    M = cv2.moments(cnt)
+    if M["m00"] != 0.0:
+        cx = int(M["m10"] / M["m00"])
+        cy = int(M["m01"] / M["m00"])
+        return (cx, cy)
+
+def barycenter_contours(contours):
+    sum_areas = 0
+    sum_x = 0
+    sum_y = 0
+    for cnt in contours:
+        center = contour_center(cnt)
+        area = cv2.contourArea(cnt)
+        sum_areas += area
+        sum_x += center[0]*area
+        sum_y += center[1]*area
+    
+    bc_x = int(sum_x/sum_areas)
+    bc_y = int(sum_y/sum_areas)
+    return (bc_x, bc_y)
+
+

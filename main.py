@@ -1,10 +1,10 @@
-from cv2 import cv2
+from cv2 import cv2, imshow
 import numpy as np
 from math import sqrt
 from math import pi
 import pandas as pd
 import os
-from tools import Arena, Rodent, contour_center
+from tools import Arena, Rodent, barycenter_contours, contour_center
 import UI
 from PySide2.QtWidgets import QApplication, QWidget, QInputDialog, QLineEdit, QFileDialog
 from PySide2.QtGui import QIcon
@@ -28,14 +28,14 @@ if __name__ == '__main__':
         exit()
 
     fps = video.get(cv2.CAP_PROP_FPS)
-    video.set(1, int(fps*10))#skip 10s
+    #video.set(1, int(fps*15))#skip 15s
     status, previous_frame = video.read()
 
 
     rodent_number = window.number_of_arenas
     scale = window.real_world_scale
     #initialize rodent variables
-    rodent_contours = [None] * rodent_number
+    rodent_centers = [None] * rodent_number
     rodents = []
     arenas = window.arenas
     for i in range(rodent_number):
@@ -52,14 +52,20 @@ if __name__ == '__main__':
         gray_frame = cv2.cvtColor(current_frame, cv2.COLOR_BGR2GRAY)
         #gaussian blur
         gray_frame = cv2.GaussianBlur(gray_frame, (5,5), 1)
+        #cv2.imshow('before', gray_frame)
+
+        #histogram equalization
+        clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
+        gray_frame = clahe.apply(gray_frame)
+        #cv2.imshow('after', gray_frame)
 
         #MOG
         bw_frame = fgbg.apply(gray_frame ,learningRate=0.001)
-        cv2.imshow('mask', bw_frame)
+        #cv2.imshow('mask', bw_frame)
 
         #morphology operations
         
-        kernel_size = 3
+        kernel_size = 7
         kernel = np.ones((kernel_size, kernel_size), np.uint8)
         eroded_frame = cv2.morphologyEx(bw_frame, cv2.MORPH_OPEN, kernel)
         kernel_size = 20
@@ -69,37 +75,46 @@ if __name__ == '__main__':
         kernel_size = 10
         kernel = np.ones((kernel_size, kernel_size), np.uint8)
         eroded_frame = cv2.morphologyEx(bw_frame, cv2.MORPH_CLOSE, kernel)
-        cv2.imshow('er', eroded_frame)
+        
+
+        kernel_size = 7
+        kernel = np.ones((kernel_size, kernel_size), np.uint8)
+        eroded_frame = cv2.morphologyEx(bw_frame, cv2.MORPH_OPEN, kernel)
+
+        #cv2.imshow('er', eroded_frame)
         #border detection
         border_image = cv2.Canny(eroded_frame, 0, 1)
 
-        cv2.imshow('bor',border_image)
 
         contours, hierarchy = cv2.findContours(eroded_frame, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
         contours_image = current_frame.copy()
-        cv2.drawContours(current_frame, contours, -1, (0, 255, 0), 2, cv2.LINE_AA)
-        cv2.imshow('cont', current_frame)
 
     
         #findeing the rodent in each arena
         for arena in arenas:
             i = i + 1
-
+            contours_inside_arena = []
             #the rodent is a contour, so we must find the contour that is inside the arena
             for cnt in contours:
                 M = cv2.moments(cnt)
                 if (not M['m00']==0.0):
                     if(arena.is_contour_inside(cnt)):
-                        index = arenas.index(arena)
-                        rodent_contours[index] = cnt
-                        rodents[index].position_array.append(contour_center(cnt))
-                        break
+                        
+                        contours_inside_arena.append(cnt)
+            
+            if contours_inside_arena: #checks if the list is empty
+                index = arenas.index(arena)
+                rodent_center = barycenter_contours(contours_inside_arena)
+                rodent_centers[index] = rodent_center
+                rodents[index].position_array.append(rodent_center)
+
+                
                         
 
 
         try:
-            for rod in rodent_contours:
-                cv2.drawContours(contours_image, rod, -1, (0, 0, 255), 2)
+            for rod in rodent_centers:
+                cv2.circle(contours_image, rod, 10, (0, 0, 255), 2)
         except:
             print('nothing whithin the boundaries')
         for arena in arenas:
