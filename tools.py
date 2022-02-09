@@ -113,6 +113,8 @@ class Rodent:
             self.sum_of_distances += d
 
     def calculate_stats(self):
+        for i in range(100):
+            self.position_array.pop(0) #eliminate initial frames that may contain errors
         self.calculate_distance_between_frames()
         self.calculate_distance_meters()
         self.calculate_total_traveled_distance()
